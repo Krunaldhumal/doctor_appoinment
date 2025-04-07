@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kk's HOSPITAL | Patient Registration Page</title>
+<link rel="stylesheet" type="text/css" href=""
+	th:href="@{/css/styles.css}" />
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+<body>
+
+	<header class="header">
+		<div class="container">
+			<nav class="navbar">
+				<h1 class="logo">
+					<a th:href="@{/welcome}"><i class="fa-solid fa-hospital-user"></i>
+						KK's </a>
+				</h1>
+				<ul class="nav-items">
+					<li class="nav-item"><a href="" th:href="@{/welcome}">Home</a></li>
+					
+					<li class="nav-item"><a href="" th:href="@{/about}">About
+							Us</a></li>
+					<li class="nav-item"><a href="" th:href="@{/contact}">Contact</a></li>
+				</ul>
+			</nav>
+
+			<div class="Pform">
+				<form th:action="@{/admin/patients}" method="post"
+					class="Pform-container">
+					<h1>Patient Registration</h1>
+
+					<label for="name"><b>Name</b></label> <input type="text"
+						placeholder="Enter your name" name="name" required><br />
+					<label for="age"><b>Age</b></label> <input type="number"
+						placeholder="Enter Your Age" name="age" required><br /> <label
+						for="email"><b>Email</b></label> <input type="email"
+						placeholder="Enter Your Emailid" name="email" required><br />
+					<label for="password"><b>Set Password</b></label> <input
+						type="password" placeholder="Set Your Password" name="Password"
+						required><br />
+
+					<button type="submit" class="btn">Register</button>
+					<button type="button" class="btn cancel">Close</button>
+				</form>
+			</div>
+		</div>
+	</header>
+
+</body>
+</html>
+

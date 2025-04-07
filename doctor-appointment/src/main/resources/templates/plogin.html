@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kk's HOSPITAL | Welcome to KK's hospital patient</title>
+<link rel="stylesheet" type="text/css" href=""
+	th:href="@{/css/styles.css}" />
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+	<header class="header2">
+		<div class="container">
+			<nav class="navbar">
+				<h1 class="logo">
+					<a th:href="@{/p_welcome}"><i class="fa-solid fa-hospital-user"></i>
+						KK's </a>
+				</h1>
+				<ul class="nav-items">
+					<li class="nav-item"><a th:href="@{/p_welcome}">Home</a></li>
+					<li class="nav-item"><a th:href="@{/about}">About Us</a></li>
+					<li class="nav-item"><a th:href="@{/contact}">Contact</a></li>
+					<li class="nav-item" th:if="${session.username == null}"
+						onclick="openForm()"><a>Login</a></li>
+					<li class="nav-item" th:if="${session.username != null}"><span
+						style="color: white">Welcome, <span th:text="${session.username}"></span></span>
+					</li>
+					<li class="nav-item" th:if="${session.username != null}"><a
+						th:href="@{/logout}">logout</a></li>
+				</ul>
+			</nav>
+		</div>
+	</header>
+
+	<br>
+	<!-- Table of Appointments -->
+<div id="table-container">
+
+<table class="doctor-data-table Appointment">
+    <thead>
+        <tr>
+            <th>Sr. No.</th>
+            <th>Appointment Date</th>
+            <th>Appointment Time</th>
+            <th>Doctor</th>
+            <th>Update</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="appointment, iterStat : ${appointments}">
+            <td th:text="${iterStat.index + 1}"></td>
+            <td th:text="${appointment.appointmentDate}"></td>
+            <td th:text="${appointment.appointmentSlot}"></td>
+<!--             <td th:text="${appointment.doctor.name}"></td>
+ -->          
+   <td th:text="${appointment.doctor != null ? appointment.doctor.name : 'No Doctor Assigned'}"></td>
+            
+            <td>
+                <!-- Edit Button to Open Modal -->
+               <button type="button" class="edit-btn" th:data-id="${appointment.id}">Edit</button>               
+            </td>
+            <td>
+                <form th:action="@{/appointment/deleteap/{id}(id=${appointment.id})}" method="post">
+                    <input type="hidden" name="_method" value="delete">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+		<div class="pagination" id="pagination-container">
+			<input type="hidden" id="totalPages" th:value="${totalPages}" /> <input
+				type="hidden" id="currentPage" th:value="${currentPage}" /> <a
+				href="#" th:if="${currentPage > 0}"
+				th:data-page="${currentPage - 1}" class="pagination-link">Previous</a>
+			<a href="#" th:if="${currentPage < totalPages - 1}"
+				th:data-page="${currentPage + 1}" class="pagination-link">Next</a> <br>
+			<span>Page <span id="currentPageDisplay"
+				th:text="${currentPage + 1}"></span> of <span id="totalPagesDisplay"
+				th:text="${totalPages}"></span></span>
+		</div>
+
+	</div>
+
+<!-- Update Appointment Modal (Initially Hidden) -->
+<div id="updateModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h1>Update Appointment</h1>
+
+        <form id="updateForm" action="#"  method="post">  <!-- Initially no action -->
+            <input type="hidden" name="_method" value="put">  <!-- Simulates PUT -->
+            <input type="hidden" name="appointmentId" id="appointmentId">
+
+            <label for="appointmentDate">Appointment Date:</label>
+            <input type="date" name="appointmentDate" id="appointmentDate" required><br>
+
+            <label for="appointmentSlot">Select Appointment Slot:</label>
+            <select name="appointmentSlot" id="appointmentSlot" required>
+                <option value="9AM-12PM">9AM-12PM</option>
+                <option value="4PM-9PM">4PM-9PM</option>
+            </select><br>
+
+            <label for="doctor">Doctor:</label>
+            <select name="doctorId" id="doctorId" required>
+                <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="${doctor.name}"></option>
+            </select><br>
+
+            <button type="submit">Update</button>
+        </form>
+    </div>
+   
+</div>
+
+	<div class="center-button" id="appBtn" th:if="${session.username != null}">
+    <a th:href="@{/appointment/create}" id="appointmentBtn"
+       class="btn btn-appointment zoom">Make an Appointment</a>
+	</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function loadPage(page) {
+        fetch(`/appointment/${page}`)
+            .then(response => response.text())
+            .then(data => {
+                let parser = new DOMParser();
+                let newDocument = parser.parseFromString(data, "text/html");
+
+                // Update the table content
+                document.getElementById('table-container').innerHTML = newDocument.querySelector('#table-container').innerHTML;
+                
+                // Update page number in the UI
+                document.getElementById("currentPage").value = page;
+                document.getElementById("currentPageDisplay").textContent = page + 1;
+
+                // Reattach event listeners for edit buttons and pagination links
+                attachEditButtonListeners();
+                attachPaginationListeners();
+            })
+            .catch(error => console.error('Error fetching appointments:', error));
+    }
+
+    function attachPaginationListeners() {
+        document.querySelectorAll('.pagination-link').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const page = parseInt(this.getAttribute('data-page'));
+                loadPage(page);
+            });
+        });
+    }
+
+    function attachEditButtonListeners() {
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                let appointmentId = this.getAttribute('data-id');
+                let row = this.closest("tr");
+                let appointmentDate = row.cells[1].textContent.trim();
+                let appointmentSlot = row.cells[2].textContent.trim();
+                let doctorName = row.cells[3].textContent.trim();
+
+                document.getElementById("appointmentId").value = appointmentId;
+                document.getElementById("appointmentDate").value = appointmentDate;
+                document.getElementById("appointmentSlot").value = appointmentSlot;
+
+                let doctorDropdown = document.getElementById("doctorId");
+                for (let option of doctorDropdown.options) {
+                    if (option.text.trim() === doctorName) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+
+                document.getElementById("updateForm").action = `/appointment/updateap/${appointmentId}`;
+                document.getElementById("updateModal").style.display = "block";
+            });
+        });
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        document.getElementById("updateModal").style.display = "none";
+    }
+
+    // Attach event listener to close button
+    document.querySelector(".close-btn").addEventListener("click", closeModal);
+
+    // Close modal when clicking outside of modal content
+    window.addEventListener("click", function (event) {
+        let modal = document.getElementById("updateModal");
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Initial attachment of event listeners
+    attachEditButtonListeners();
+    attachPaginationListeners();
+});
+
+</script>
+
+</body>
+</html>

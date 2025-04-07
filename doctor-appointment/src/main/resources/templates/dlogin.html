@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kk's HOSPITAL | Welcome to KK's hospital doctor</title>
+<link rel="stylesheet" type="text/css" href=""
+	th:href="@{/css/styles.css}" />
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+<body>
+
+	<header class="header2">
+		<div class="container">
+			<nav class="navbar">
+				<h1 class="logo">
+					<a th:href="@{/d_welcome}"><i class="fa-solid fa-hospital-user"></i>
+						KK's </a>
+				</h1>
+				<ul class="nav-items">
+					<li class="nav-item"><a th:href="@{/d_welcome}">Home</a></li>
+					<li class="nav-item"><a th:href="@{/about}">About Us</a></li>
+					<li class="nav-item"><a th:href="@{/contact}">Contact</a></li>
+					<li class="nav-item" th:if="${session.username == null}"
+						onclick="openForm()"><a>Login</a></li>
+					<li class="nav-item" th:if="${session.username != null}"><span
+						style="color: white">Welcome, <span th:text="${session.username}"></span></span>
+					</li>
+					<li class="nav-item" th:if="${session.username != null}"><a
+						th:href="@{/logout}">logout</a></li>
+				</ul>
+			</nav>
+		</div>
+	</header>
+	<br>
+
+<form method="get" th:action="@{/appointment/dateFilter}" class="filter-form">
+    <label>Filter by Date:</label>
+    <input type="date" name="date" th:value="${filterDate}" />
+
+    <label>Filter by Slot:</label>
+    <select name="slot">
+        <option value="">All Slots</option>
+        <option value="9AM-12PM" th:selected="${filterSlot == '9AM-12PM'}">9AM - 12PM</option>
+        <option value="4PM-9PM" th:selected="${filterSlot == '4PM-9PM'}">4PM - 9PM</option>
+    </select>
+
+    <button type="submit">Apply Filters</button>
+</form>
+
+	<div id="table-container">
+	
+		<h2>Your today's appoinment</h2>
+		
+		<br>
+		
+		<div>Current Page: <span th:text="${currentPage}"></span></div>
+		
+	 <table class="doctor-data-table Appointment" id="Appointment">
+			<thead>
+				<tr>
+					<th>Sr. No.</th>
+					<th><label for="filterDate">Date</label></th>
+					<th>Time</th>
+					<th>Name</th>
+					<th>Update</th>
+					<th>Delete</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="appointment,apid : ${appointments}">
+					<td th:text="${apid.index + 1}"></td>
+					<td th:text="${appointment.appointmentDate}"></td>
+					<td th:text="${appointment.appointmentSlot}"></td>
+					<td th:text="${appointment.patient.name}"></td>
+					<td>
+						<button class="update-btn" onclick="toggleUpdate(this)">
+							<i class="fa-regular fa-circle"></i>
+							<!-- Empty Circle -->
+						</button>
+					</td>
+					
+					<td>
+						<form th:action="@{/appointment/deleteap/{id}(id=${appointment.id})}"
+							method="post">
+							<input type="hidden" name="_method" value="delete" />
+							<button type="submit">Delete</button>
+						</form>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+<!-- 				<div class="pagination">
+			<span th:if="${currentPage > 0}"> <a href="#"
+				th:data-page="${currentPage - 1}" class="pagination-link">Previous</a>
+			</span> <span th:if="${currentPage < totalPages - 1}"> <a href="#"
+				th:data-page="${currentPage + 1}" class="pagination-link">Next</a>
+			</span><br> <span>Page <span th:text="${currentPage + 1}"></span>
+				of <span th:text="${totalPages}"></span>
+			</span>
+		</div>  -->
+
+		<div class="pagination">
+			<span th:if="${currentPage > 0}"> <a
+				th:href="@{/appointment/dateFilter(page=${currentPage - 1}, date=${filterDate}, slot=${filterSlot})}"
+				class="pagination-link">Previous</a>
+			</span> <span th:if="${currentPage < totalPages - 1}"> <a
+				th:href="@{/appointment/dateFilter(page=${currentPage + 1}, date=${filterDate}, slot=${filterSlot})}"
+				class="pagination-link">Next</a>
+			</span> <br> <span> Page <span th:text="${currentPage + 1}"></span>
+				of <span th:text="${totalPages}"></span>
+			</span>
+		</div>
+
+		<!-- 	<div class="pagination">
+			<span th:if="${currentPage > 0}"> <a href="javascript:void(0)"
+				th:onclick="'applyFilter(' + (${currentPage} - 1) + ')'"
+				class="pagination-link">Previous</a>
+			</span> <span th:if="${currentPage < totalPages - 1}"> <a
+				href="javascript:void(0)"
+				th:onclick="'applyFilter(' + (${currentPage} + 1) + ')'"
+				class="pagination-link">Next</a>
+			</span> <br> <span> Page <span th:text="${currentPage + 1}"></span>
+				of <span th:text="${totalPages}"></span>
+			</span>
+		</div> -->
+
+	</div>
+		
+
+<script type="text/javascript">
+
+    // Move this outside so it's globally accessible
+    function toggleUpdate(button) {
+        const icon = button.querySelector("i");
+
+        if (icon.classList.contains("fa-circle")) {
+            icon.classList.remove("fa-circle");
+            icon.classList.add("fa-check-circle");
+            icon.style.color = "green";
+        } else {
+            icon.classList.remove("fa-check-circle");
+            icon.classList.add("fa-circle");
+            icon.style.color = ""; // Reset color
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterInput = document.getElementById("filterDate");
+        const today = new Date().toISOString().split("T")[0];
+        filterInput.value = today;
+
+        filterAppointments();
+
+        filterInput.addEventListener("change", filterAppointments);
+
+        function filterAppointments() {
+            const selectedDate = filterInput.value;
+            const rows = document.querySelectorAll("#Appointment tbody tr");
+
+            rows.forEach(row => {
+                const appointmentDate = row.cells[1].textContent.trim();
+                if (!selectedDate || appointmentDate === selectedDate) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        function loadPage(page) {
+        	fetch(`/appointment/dateFilter?page=${page}&date=${date}&slot=${slot}`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('appointmentTable').innerHTML = html;
+                attachPaginationListeners(); // re-bind after load
+            })
+            .catch(error => console.log(error));
+    
+        }
+        
+      function attachPaginationListeners() {
+            const paginationLinks = document.querySelectorAll('.pagination-link');
+            paginationLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    loadPage(page);
+                });
+            });
+        } 
+        
+        /* function applyFilter(page) {
+            var date = $('#dateFilter').val();
+            var slot = $('#slotFilter').val();
+
+            $.ajax({
+                url: '/dateFilter',
+                data: {
+                    date: date,
+                    slot: slot,
+                    page: page
+                },
+                success: function (response) {
+                    $('#table-container').html(response);
+                }
+            });
+        } */
+
+        attachPaginationListeners();
+    });
+</script>
+
+</body>
+</html>

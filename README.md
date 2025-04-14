@@ -14,7 +14,7 @@ It is a web-based application designed to manage appointments between patients a
 - Patient Registration and Login
 - Book Appointment with Doctor
 - View their Booked Appointments
-- update, delete appoinments
+- update and delete appoinments
 
 ---
 
@@ -41,7 +41,6 @@ It is a web-based application designed to manage appointments between patients a
 - Thymeleaf (Frontend)
 - MySQL (Database)
 - HTML, CSS, Bootstrap
-- Lombok (for boilerplate code reduction)
 
 ---
 
